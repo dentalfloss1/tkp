@@ -16,6 +16,12 @@ from tkp.accessors.aartfaaccasaimage import AartfaacCasaImage
 from tkp.accessors.lofarfitsimage import LofarFitsImage
 from tkp.accessors.lofarcasaimage import LofarCasaImage
 from tkp.accessors.fitsimageblob import FitsImageBlob
+
+try:
+    from tkp.accessors.pimsimage import pimsImage
+except Exception as e:
+    print(e)
+
 import tkp.accessors.detection
 
 
@@ -73,5 +79,7 @@ def open(path, *args, **kwargs):
         if not Accessor:
             raise OSError("no accessor found for %s" % path)
         return Accessor(path, *args, **kwargs)
+    elif type(path) == tuple:
+        return pimsImage(path[0],path[1])
     else:
-        raise Exception("image should be path or HDUlist, got " + str(path))
+        raise Exception("image should be path, HDUlist, or tuple got " + str(path))
