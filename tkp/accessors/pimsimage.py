@@ -59,7 +59,6 @@ class pimsImage(DataAccessor):
         elif n_dim != 2:
             logger.warning("Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
             data = data[0, :, :]
-        data = data.transpose()
 
     def parse_coordinates(self):
         """Returns a WCS object"""
