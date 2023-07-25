@@ -23,42 +23,42 @@ logger = logging.getLogger(__name__)
 class pimsImage(DataAccessor):
     """Use the LWA Software Library to pull image data out of a pims file.
     Provide standard attributes, as per :class:`DataAccessor`."""
-    def __init__(self, url, time_index, plane=None, beam=None):
+    def __init__(self, filename, time_index, beamfile, plane=None):
         super(pimsImage, self).__init__()
-        self.url = url
+        self.url = f"{filename},{time_index},{beamfile}"
         try:
-            db = PasiImageDB(self.url, mode='r')
+            db = PasiImageDB(filename, mode='r')
         except Exception as e:
             print("ERROR: %s" % str(e))
-        self.header, self.dbdata, self.spec = db.readImage() 
-        self.data = self.read_data(time_index,self.dbdata)
-        self.imSize = data.shape[-1]
+        self.header, self.dbdata, self.spec = db[time_index] 
+        self.pb = np.load(beamfile)
+        self.data = self.read_data(plane)/self.pb
+        self.imSize = self.data.shape[-1]
         pScale = self.header['xPixelSize']
-        self.sRad   = 360.0/pScale/np.pi / 2
+        self.sRad  = 360.0/pScale/np.pi / 2
         self.wcs = self.parse_coordinates()
         self.taustart_ts, self.tau_time = self.parse_times()
         self.freq_eff, self.freq_bw = self.parse_frequency()
         self.pixelsize = self.parse_pixelsize()
-        bmaj,bmin,bpa = self.parse_beam(self.freq_eff)
+        bmaj,bmin,bpa = self.parse_beam()
         self.beam = self.degrees2pixels(
             bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
             )
-        self.centre_ra, self.centre_decl = self.calculate_phase_centre
+        self.centre_ra, self.centre_decl = self.calculate_phase_centre()
+        self.telescope="LWA1"
         db.close()
         
-
-    def _get_header(self):
-        header, data, spec = self.db.readImage() 
-        return header
+   
     
-    def read_data(self, time_index, dbdata)
-        currentdata = dbdata[time_index]
+    def read_data(self,plane):
+        data = self.dbdata
         n_dim = len(data.shape)
         if plane is not None:
             data = data[plane]
         elif n_dim != 2:
             logger.warning("Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
             data = data[0, :, :]
+        return data
 
     def parse_coordinates(self):
         """Returns a WCS object"""
@@ -70,14 +70,13 @@ class pimsImage(DataAccessor):
             
             wcs.crval = header['zenithRA'],header['zenithDec']
             wcs.crpix = imSize/2 + 1 + 0.5 * ((imSize+1)%2),imSize/2 + 1 + 0.5 * ((imSize+1)%2)
-            wcs.cdelt = -360.0/(2*sRad)/numpy.pi, 360.0/(2*sRad)/numpy.pi
+            wcs.cdelt = -360.0/(2*sRad)/np.pi, 360.0/(2*sRad)/np.pi
         except KeyError:
             msg = "Coordinate system not specified in pims"
             logger.error(msg)
             raise TypeError(msg)
         wcs.ctype = 'RA---SIN','DEC--SIN'
         wcs.crota = 0., 0.
-        wcs.cunit = header['cunit1'], header['cunit2']
         wcs.cunit = 'deg', 'deg'
         return wcs
 

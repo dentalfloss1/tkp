@@ -49,7 +49,7 @@ def extract_metadatas(accessors, rms_est_sigma, rms_est_fraction):
     """
     results = []
     for accessor in accessors:
-        logger.debug("Extracting metadata from %s" % accessor.url)
+        logger.debug(f"Extracting metadata from {accessor.url}")
         metadata = accessor.extract_metadata()
         metadata['rms_qc'] = rms_with_clipped_subregion(accessor.data,
                                                         rms_est_sigma,
