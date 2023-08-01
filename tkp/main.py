@@ -280,8 +280,8 @@ def assocate_and_get_force_fits(db_image, job_config):
 
 
 def varmetric(dataset_id):
-    logger.info("calculating variability metrics")
-    execute_store_varmetric(dataset_id)
+    logger.info("NOT calculating variability metrics")
+   #  execute_store_varmetric(dataset_id)
 
 
 def close_database(dataset_id):

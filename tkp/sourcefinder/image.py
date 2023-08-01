@@ -744,13 +744,13 @@ class ImageData(object):
         for idx, posn in enumerate(positions):
             try:
                 x, y, = self.wcs.s2p((posn[0], posn[1]))
-            except RuntimeError as e:
+            except Exception as e:
                 if (str(e).startswith("wcsp2s error: 8:") or
                         str(e).startswith("wcsp2s error: 9:")):
                     logger.warning("Input coordinates (%.2f, %.2f) invalid: ",
                                    posn[0], posn[1])
                 else:
-                    raise
+                    logger.warning(e)
             else:
                 try:
                     fit_results = self.fit_to_point(x, y,
@@ -768,7 +768,7 @@ class ImageData(object):
                         if ids:
                             successful_ids.append(ids[idx])
 
-                except IndexError as e:
+                except Exception  as e:
                     logger.warning("Input pixel coordinates (%.2f, %.2f) "
                                    "could not be fit because: " + str(e),
                                    posn[0], posn[1])
