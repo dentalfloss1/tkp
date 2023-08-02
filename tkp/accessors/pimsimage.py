@@ -81,9 +81,7 @@ class pimsImage(DataAccessor):
         return wcs
 
     def calculate_phase_centre(self):
-        x, y = self.data.shape
-        centre_ra, centre_decl = self.wcs.p2s((x / 2, y / 2))
-        return float(centre_ra), float(centre_decl)
+        return self.header['zenithRA'], self.header['zenithDec']
 
     def parse_frequency(self):
         """
