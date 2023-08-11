@@ -18,6 +18,7 @@ from tkp.accessors.lofarcasaimage import LofarCasaImage
 from tkp.accessors.fitsimageblob import FitsImageBlob
 
 from tkp.accessors.pimsimage import pimsImage
+from tkp.accessors.oimsimage import oimsImage
 
 import tkp.accessors.detection
 
@@ -70,6 +71,9 @@ def open(path, *args, **kwargs):
     elif ".pims" in path:
         pimsargs = path.split(',')
         return pimsImage(pimsargs[0],int(pimsargs[1]),pimsargs[2])
+    elif ".oims" in path:
+        oimsargs = path.split(',')
+        return oimsImage(oimsargs[0],int(oimsargs[1]),oimsargs[2],int(oimsargs[3]))
     elif type(path) == str:
         if not os.access(path, os.F_OK):
             raise OSError("%s does not exist!" % path)
