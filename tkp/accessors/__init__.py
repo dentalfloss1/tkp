@@ -16,6 +16,9 @@ from tkp.accessors.aartfaaccasaimage import AartfaacCasaImage
 from tkp.accessors.lofarfitsimage import LofarFitsImage
 from tkp.accessors.lofarcasaimage import LofarCasaImage
 from tkp.accessors.fitsimageblob import FitsImageBlob
+
+from tkp.accessors.pimsimage import pimsImage
+
 import tkp.accessors.detection
 
 
@@ -64,6 +67,9 @@ def open(path, *args, **kwargs):
     """
     if type(path) == HDUList:
         return FitsImageBlob(path, *args, **kwargs)
+    elif ".pims" in path:
+        pimsargs = path.split(',')
+        return pimsImage(pimsargs[0],int(pimsargs[1]),pimsargs[2])
     elif type(path) == str:
         if not os.access(path, os.F_OK):
             raise OSError("%s does not exist!" % path)
@@ -74,4 +80,4 @@ def open(path, *args, **kwargs):
             raise OSError("no accessor found for %s" % path)
         return Accessor(path, *args, **kwargs)
     else:
-        raise Exception("image should be path or HDUlist, got " + str(path))
+        raise Exception("image should be path or HDUlist got " + str(path))
