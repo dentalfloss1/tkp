@@ -69,7 +69,7 @@ class pimsImage(DataAccessor):
         try:
             
             wcs.crval = header['zenithRA'],header['zenithDec']
-            wcs.crpix = imSize/2 + 1 + 0.5 * ((imSize+1)%2),imSize/2 + 1 + 0.5 * ((imSize+1)%2)
+            wcs.crpix = imSize/2  + 0.5 * ((imSize + 1)%2),imSize/2 + 0.5 * ((imSize + 1)%2)
             wcs.cdelt = -360.0/(2*sRad)/np.pi, 360.0/(2*sRad)/np.pi
         except KeyError:
             msg = "Coordinate system not specified in pims"
@@ -81,7 +81,7 @@ class pimsImage(DataAccessor):
         return wcs
 
     def calculate_phase_centre(self):
-        return self.header['zenithRA'], self.header['zenithDec']
+        return self.header['zenithRA'] , self.header['zenithDec'] 
 
     def parse_frequency(self):
         """
