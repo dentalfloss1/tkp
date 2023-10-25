@@ -135,8 +135,8 @@ for file in oimsfiles:
 
 allfreq = np.array(allfreq,dtype=[('file','<U256'),('header','O'),('imSize','i8'),('chan','i8')])
 _,uniquefreqs = np.unique(allfreq['file'],return_index=True)
-for f in allfreq[uniquefreqs]:
-    pbcorr(*f)
+# for f in allfreq[uniquefreqs]:
+#     pbcorr(*f)
 #Display the list of images to be processed whenever this file is imported:
 # (can be used for quick checking via an ipython import)
 print("******** IMAGES: ********")

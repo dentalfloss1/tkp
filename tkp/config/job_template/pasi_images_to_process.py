@@ -133,8 +133,8 @@ for file in pimsfiles:
 
 allfreq = np.array(allfreq,dtype=[('file','<U256'),('header','O'),('imSize','i8')])
 _,uniquefreqs = np.unique(allfreq['file'],return_index=True)
-for f in allfreq[uniquefreqs]:
-    pbcorr(*f)
+# for f in allfreq[uniquefreqs]:
+#     pbcorr(*f)
 
 
 

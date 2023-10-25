@@ -31,8 +31,8 @@ class pimsImage(DataAccessor):
         except Exception as e:
             print("ERROR: %s" % str(e))
         self.header, self.dbdata, self.spec = db[time_index] 
-        self.pb = np.load(beamfile)
-        self.data = self.read_data(plane)/self.pb
+#         self.pb = np.load(beamfile)
+        self.data = self.read_data(plane)# /self.pb
         self.imSize = self.data.shape[-1]
         pScale = self.header['xPixelSize']
         self.sRad  = 360.0/pScale/np.pi / 2
@@ -57,7 +57,7 @@ class pimsImage(DataAccessor):
             data = data[plane]
         elif n_dim != 2:
             logger.warning("Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
-            data = data[0, :, :]
+            data = data[0, :, :] + np.abs(np.amin(data[0,:,:]))
         return data
 
     def parse_coordinates(self):
@@ -141,7 +141,7 @@ class pimsImage(DataAccessor):
 
         #For simplicity, the database requires naive datetimes (implicit UTC)
         #So we convert to UTC and then drop the timezone:
-        timezone = pytz.timezone('US/Mountain') # LWA is in the Mountain timezone
+        timezone = pytz.timezone('UTC') # LWA is in the Mountain timezone
         start_w_tz = start.replace(tzinfo=timezone)
         start_utc = pytz.utc.normalize(start_w_tz.astimezone(pytz.utc))
         return start_utc.replace(tzinfo=None), tau_time

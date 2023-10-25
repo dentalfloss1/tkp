@@ -32,8 +32,8 @@ class oimsImage(DataAccessor):
             print("ERROR: %s" % str(e))
         self.header, self.alldata = db[time_index]
         self.freqind = freqind
-        self.pb = np.load(beamfile)
-        self.data = np.transpose(self.read_data(plane)/self.pb)
+#         self.pb = np.load(beamfile)
+        self.data = np.transpose(self.read_data(plane))# /self.pb)
         self.imSize = self.data.shape[-1]
         pScale = self.header['pixel_size']
         self.sRad  = 360.0/pScale/np.pi / 2
