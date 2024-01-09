@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # As such, it should be larger than the expected range of real values,
 # since we will get negative values representing real data after
 # background subtraction, etc.
-BIGNUM = 99999.0
+BIGNUM = 999999999.0
 
 
 class Island(object):

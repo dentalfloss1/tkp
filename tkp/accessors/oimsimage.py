@@ -16,25 +16,26 @@ from tkp.utility.coordinates import WCS
 
 from lsl.common.mcs import mjdmpm_to_datetime
 
-from lsl_toolkits.PasiImage import PasiImageDB
+from tkp.accessors.OrvilleImageDB import OrvilleImageDB
 
 logger = logging.getLogger(__name__)
 
-class pimsImage(DataAccessor):
-    """Use the LWA Software Library to pull image data out of a pims file.
+class oimsImage(DataAccessor):
+    """Use the LWA Software Library to pull image data out of a oims file.
     Provide standard attributes, as per :class:`DataAccessor`."""
-    def __init__(self, filename, time_index, beamfile, plane=None):
-        super(pimsImage, self).__init__()
-        self.url = f"{filename},{time_index},{beamfile}"
+    def __init__(self, filename, time_index, beamfile, freqind,plane=None):
+        super(oimsImage, self).__init__()
+        self.url = f"{filename},{time_index},{beamfile},{freqind}"
         try:
-            db = PasiImageDB(filename, mode='r')
+            db = OrvilleImageDB(filename,'r')
         except Exception as e:
             print("ERROR: %s" % str(e))
-        self.header, self.dbdata, self.spec = db[time_index] 
+        self.header, self.alldata = db[time_index]
+        self.freqind = freqind
 #         self.pb = np.load(beamfile)
-        self.data = self.read_data(plane)# /self.pb
+        self.data = np.transpose(self.read_data(plane))# /self.pb)
         self.imSize = self.data.shape[-1]
-        pScale = self.header['xPixelSize']
+        pScale = self.header['pixel_size']
         self.sRad  = 360.0/pScale/np.pi / 2
         self.wcs = self.parse_coordinates()
         self.taustart_ts, self.tau_time = self.parse_times()
@@ -45,19 +46,19 @@ class pimsImage(DataAccessor):
             bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
             )
         self.centre_ra, self.centre_decl = self.calculate_phase_centre()
-        self.telescope="LWA1"
+        self.telescope="LWA-SV"
         db.close()
         
    
     
     def read_data(self,plane):
-        data = self.dbdata
+        data = self.alldata[self.freqind]
         n_dim = len(data.shape)
         if plane is not None:
             data = data[plane]
         elif n_dim != 2:
             logger.warning("Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
-            data = data[0, :, :] + np.abs(np.amin(data[0,:,:]))
+            data = data[0, :, :]
         return data
 
     def parse_coordinates(self):
@@ -68,8 +69,8 @@ class pimsImage(DataAccessor):
         wcs = WCS()
         try:
             
-            wcs.crval = header['zenithRA'],header['zenithDec']
-            wcs.crpix = imSize/2  + 0.5 * ((imSize + 1)%2),imSize/2 + 0.5 * ((imSize + 1)%2)
+            wcs.crval = header['center_ra'],header['center_dec']
+            wcs.crpix = imSize/2 + 1 + 0.5 * ((imSize+1)%2),imSize/2 + 1 + 0.5 * ((imSize+1)%2)
             wcs.cdelt = -360.0/(2*sRad)/np.pi, 360.0/(2*sRad)/np.pi
         except KeyError:
             msg = "Coordinate system not specified in pims"
@@ -81,7 +82,7 @@ class pimsImage(DataAccessor):
         return wcs
 
     def calculate_phase_centre(self):
-        return self.header['zenithRA'] , self.header['zenithDec'] 
+        return self.header['center_ra'], self.header['center_dec']
 
     def parse_frequency(self):
         """
@@ -91,8 +92,10 @@ class pimsImage(DataAccessor):
         @param hdulist: hdulist to parse
         @type hdulist: hdulist
         """
-        freq_eff = self.header['freq']
-        freq_bw = self.header['bandwidth']
+        hdr = self.header
+        midfreq = (hdr['start_freq']  + ((self.freqind+1)*hdr['bandwidth']/2))
+        freq_eff = midfreq 
+        freq_bw = hdr['bandwidth']
         return freq_eff, freq_bw
 
     def parse_beam(self):
@@ -103,9 +106,11 @@ class pimsImage(DataAccessor):
           - Beam parameters, (semimajor, semiminor, position angle)
             in (pixels, pixels, radians)
         """
-        header = self.header
-        beamSize = 2.2*74e6/header['freq'] # lwa1
-        bmaj, bmin, bpa = beamSize/header['xPixelSize'], beamSize/header['xPixelSize'],0.0
+        hdr = self.header
+        psize = hdr['pixel_size']
+        midfreq = (hdr['start_freq']  + ((self.freqind+1)*hdr['bandwidth']/2))
+        beamSize = 2.2*74e6/midfreq # lwa1
+        bmaj, bmin, bpa = beamSize/psize, beamSize/psize,0.0
 
 
         return bmaj, bmin, bpa
@@ -116,10 +121,10 @@ class pimsImage(DataAccessor):
         Returns:
           - start time of image as an instance of ``datetime.datetime``
         """
-        header = self.header
-        mjd = int(header['startTime'])
-        mpm = int((header['startTime'] - mjd)*86400.0*1000.0)
-        tInt = header['intLen']*86400.0
+        hdr = self.header
+        mjd = int(hdr['start_time'])
+        mpm = int((hdr['start_time'] - mjd)*86400.0*1000.0)
+        tInt = hdr['int_len']*86400.0
         start = mjdmpm_to_datetime(mjd, mpm)
         return start
 
@@ -131,8 +136,10 @@ class pimsImage(DataAccessor):
           - tau_time: Integration time, in seconds
         """
         # Attempt to do something sane with timestamps.
-        header= self.header
-        tInt = header['intLen']*86400.
+        hdr = self.header
+        mjd = int(hdr['start_time'])
+        mpm = int((hdr['start_time'] - mjd)*86400.0*1000.0)
+        tInt = hdr['int_len']*86400.0
         start = self.parse_start_time()
         end = start + timedelta(seconds=int(tInt), microseconds=int((tInt-int(tInt))*1000000))
 
@@ -141,7 +148,7 @@ class pimsImage(DataAccessor):
 
         #For simplicity, the database requires naive datetimes (implicit UTC)
         #So we convert to UTC and then drop the timezone:
-        timezone = pytz.timezone('UTC') # LWA is in the Mountain timezone
+        timezone = pytz.timezone('US/Mountain') # LWA is in the Mountain timezone
         start_w_tz = start.replace(tzinfo=timezone)
         start_utc = pytz.utc.normalize(start_w_tz.astimezone(pytz.utc))
         return start_utc.replace(tzinfo=None), tau_time
