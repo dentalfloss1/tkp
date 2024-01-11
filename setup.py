@@ -18,6 +18,8 @@ install_requires = """
     pytest
     dask
     dask[array]
+    lsl
+    lsl-toolkits-pasiimage
     """.split()
 
 tkp_scripts = [

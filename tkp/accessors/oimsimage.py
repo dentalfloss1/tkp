@@ -53,13 +53,10 @@ class oimsImage(DataAccessor):
    
     
     def read_data(self,plane):
+        start = datetime.now()
         data = self.alldata[self.freqind]
-        n_dim = len(data.shape)
-        if plane is not None:
-            data = data[plane]
-        elif n_dim != 2:
-            logger.warning("Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
-            data = data[0, :, :]
+        data = data[0, :, :]
+        t1 = datetime.now()
         return data
 
     def parse_coordinates(self):
@@ -149,9 +146,7 @@ class oimsImage(DataAccessor):
 
         #For simplicity, the database requires naive datetimes (implicit UTC)
         #So we convert to UTC and then drop the timezone:
-        timezone = pytz.timezone('US/Mountain') # LWA is in the Mountain timezone
-        start_w_tz = start.replace(tzinfo=timezone)
-        start_utc = pytz.utc.normalize(start_w_tz.astimezone(pytz.utc))
-        return start_utc.replace(tzinfo=None), tau_time
+        # oims images are in UTC
+        return start, tau_time
 
       
