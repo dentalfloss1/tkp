@@ -118,14 +118,17 @@ def pbcorr(pbfile,header,imSize,chan):
     # Correct stokes I only, need XY and YX for U and V, could do Q here
     np.save(pbfile,((XX+YY)/2))
 
-oimsfiles = glob.glob("/mnt/vg0/oims/*.oims")
+oimsfiles = glob.glob("/home/sarah/Data/oims/58956*.oims")
 images = []
 cwd = os.getcwd()
 allfreq = []
 for file in oimsfiles:
         db = OrvilleImageDB(file, mode='r') 
-        for i,(hdr,alldata) in enumerate(db):
-            for chan,stokesdata in enumerate(alldata.data):
+        ints = db.nint
+        for i in range(ints):
+            db.seek(i)
+            hdr, alldata = db.read_image()
+            for chan,stokesdata in enumerate(alldata):
                 data = alldata[chan]
                 freq = (hdr['start_freq']  + ((chan+1)*hdr['bandwidth']/2))
                 pbpath = f"{cwd}/pb{freq}.npy"

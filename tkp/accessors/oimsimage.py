@@ -30,7 +30,8 @@ class oimsImage(DataAccessor):
             db = OrvilleImageDB(filename,'r')
         except Exception as e:
             print("ERROR: %s" % str(e))
-        self.header, self.alldata = db[time_index]
+        db.seek(time_index)
+        self.header, self.alldata = db.read_image()
         self.freqind = freqind
 #         self.pb = np.load(beamfile)
         self.data = np.transpose(self.read_data(plane))# /self.pb)
